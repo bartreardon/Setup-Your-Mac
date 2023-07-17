@@ -53,6 +53,17 @@ outdatedOsAction="${9:-"/System/Library/CoreServices/Software Update.app"}"     
 webhookURL="${10:-""}"                                                          # Parameter 10: Microsoft Teams or Slack Webhook URL [ Leave blank to disable (default) | https://microsoftTeams.webhook.com/URL | https://hooks.slack.com/services/URL ] Can be used to send a success or failure message to Microsoft Teams or Slack via Webhook. (Function will automatically detect if Webhook URL is for Slack or Teams; can be modified to include other communication tools that support functionality.)
 presetConfiguration="${11:-""}"                                                 # Parameter 11: Specify a Configuration (i.e., `policyJSON`; NOTE: If set, `promptForConfiguration` will be automatically suppressed and the preselected configuration will be used instead)
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Set Dialog path, Command Files, JAMF binary, log files and currently logged-in user
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+dialogBinary="/usr/local/bin/dialog"
+dialogVersion=$( ${dialogBinary} --version )
+welcomeJSONFile=$( mktemp -u /var/tmp/welcomeJSONFile.XXX )
+welcomeCommandFile=$( mktemp -u /var/tmp/dialogWelcome.XXX )
+setupYourMacCommandFile=$( mktemp -u /var/tmp/dialogSetupYourMac.XXX )
+failureCommandFile=$( mktemp -u /var/tmp/dialogFailure.XXX )
+jamfBinary="/usr/local/bin/jamf"
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -400,7 +411,6 @@ function dialogInstall() {
 
         /usr/sbin/installer -pkg "$tempDirectory/Dialog.pkg" -target /
         sleep 2
-        dialogVersion=$( /usr/local/bin/dialog --version )
         updateScriptLog "PRE-FLIGHT CHECK: swiftDialog version ${dialogVersion} installed; proceeding..."
 
     else
@@ -433,7 +443,6 @@ function dialogCheck() {
 
     else
 
-        dialogVersion=$(/usr/local/bin/dialog --version)
         if [[ "${dialogVersion}" < "2.2.0.4535" ]]; then
             
             updateScriptLog "PRE-FLIGHT CHECK: swiftDialog version ${dialogVersion} found but swiftDialog 2.2 or newer is required; updating..."
@@ -475,7 +484,6 @@ macOSproductVersion="$( sw_vers -productVersion )"
 macOSbuildVersion="$( sw_vers -buildVersion )"
 serialNumber=$( system_profiler SPHardwareDataType | grep Serial |  awk '{print $NF}' )
 timestamp="$( date '+%Y-%m-%d-%H%M%S' )"
-dialogVersion=$( /usr/local/bin/dialog --version )
 
 
 
@@ -487,20 +495,6 @@ case ${debugMode} in
     "true"      ) scriptVersion="DEBUG MODE | Dialog: v${dialogVersion} • Setup Your Mac: v${scriptVersion}" ;;
     "verbose"   ) scriptVersion="VERBOSE DEBUG MODE | Dialog: v${dialogVersion} • Setup Your Mac: v${scriptVersion}" ;;
 esac
-
-
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Set Dialog path, Command Files, JAMF binary, log files and currently logged-in user
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-dialogBinary="/usr/local/bin/dialog"
-welcomeJSONFile=$( mktemp -u /var/tmp/welcomeJSONFile.XXX )
-welcomeCommandFile=$( mktemp -u /var/tmp/dialogWelcome.XXX )
-setupYourMacCommandFile=$( mktemp -u /var/tmp/dialogSetupYourMac.XXX )
-failureCommandFile=$( mktemp -u /var/tmp/dialogFailure.XXX )
-jamfBinary="/usr/local/bin/jamf"
-
 
 
 ####################################################################################################
